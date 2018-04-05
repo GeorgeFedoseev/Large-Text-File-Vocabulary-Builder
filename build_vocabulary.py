@@ -1,12 +1,10 @@
-#-*-coding:utf8-*-
-
-from fb2lib.fb2 import PyFb2
-from fb2lib.body import MainTag
+# -*- coding: utf-8 -*-
 
 import sys
 import os
 
 import re
+import io
 
 # lang detection
 from langdetect import detect
@@ -49,7 +47,7 @@ def build_vocabulary(output_path='vocabulary.txt'):
     def process_txt_file(b):
         sentences = []
 
-        item_path = os.path.join(FB2_DIR_PATH, b)
+        item_path = os.path.join(TEXTS_DIR_PATH, b)
 
 
         if item_path.split(".")[-1] != "txt":
@@ -73,6 +71,10 @@ def build_vocabulary(output_path='vocabulary.txt'):
         f.close()
         print "Loaded file %s" % item_path
 
+        print "Decoding text...."
+        text = unicode(text, errors='ignore')
+        print "Done decoding text"
+
 
         print 'Tokenizing text...'
         tokens = sent_detector.tokenize(text)        
@@ -81,23 +83,30 @@ def build_vocabulary(output_path='vocabulary.txt'):
 
         print "Filtering and processing tokens..."
 
-        pbar = tqdm(total=len(os.listdir(FB2_DIR_PATH)))
+        pbar = tqdm(total=len(tokens))
 
         for sent in tokens:
+            pbar.update(1)
+
             if is_bad_text(sent):
                 continue
 
             # convert linebreaks to spaces                    
             sent = sent.replace("\n", " ")
+            # convert dashes to spaces
+            sent = sent.replace("-", " ")
             # strip double spaces
             sent = re.sub(' +', ' ', sent)
+            # to lowercase
             sent = sent.lower()
+            # remove everything but russian letters and spaces
             sent = re.sub(u'[^а-яё ]', '', sent)
+            # remove spaces on sides
             sent = sent.strip()
             #print sent
             sentences.append(sent)
 
-            pbar.update(1)
+            
 
         print "Successfully finished processing %s" % item_path
         
